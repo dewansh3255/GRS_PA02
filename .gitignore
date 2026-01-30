@@ -1,0 +1,17 @@
+# Binaries
+*.o
+*.out
+server
+client
+a.out
+
+# OS files
+.DS_Store
+*.swp
+
+# Data files (we'll commit these later manually)
+# *.csv
+
+# IDE
+.vscode/
+.idea/
