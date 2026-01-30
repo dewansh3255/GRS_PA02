@@ -50,6 +50,22 @@ make clean
 # Example: ./MT25067_PartA1_Client 1024 10000
 ```
 
+### Part A2: One-Copy Implementation
+
+**Terminal 1 (Server):**
+```bash
+./MT25067_PartA2_Server <message_size> <num_messages> <max_clients>
+# Example: ./MT25067_PartA2_Server 1024 10000 4
+```
+
+**Terminal 2 (Client):**
+```bash
+./MT25067_PartA2_Client <message_size> <num_messages>
+# Example: ./MT25067_PartA2_Client 1024 10000
+```
+
+**Note:** Part A2 uses port 8081 (A1 uses 8080) so both can run simultaneously for comparison.
+
 ### Testing with Multiple Clients
 Open multiple client terminals and run the client command simultaneously.
 
@@ -76,7 +92,7 @@ Open multiple client terminals and run the client command simultaneously.
 
 ### Current Status
 - ✅ Part A1: Two-Copy implementation complete
-- ⏳ Part A2: One-Copy implementation (in progress)
+- ✅ Part A2: One-Copy implementation complete
 - ⏳ Part A3: Zero-Copy implementation (in progress)
 - ⏳ Part C: Automation script (pending)
 - ⏳ Part D: Plotting (pending)

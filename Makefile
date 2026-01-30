@@ -11,8 +11,8 @@ ALL_CLIENTS = MT25067_PartA1_Client MT25067_PartA2_Client MT25067_PartA3_Client
 
 .PHONY: all clean part_a1 part_a2 part_a3
 
-all: part_a1
-	@echo "Build complete. Use 'make part_a2' and 'make part_a3' when ready."
+all: part_a1 part_a2
+	@echo "Build complete. Use 'make part_a3' when ready."
 
 # Part A1: Two-Copy (Baseline)
 part_a1: MT25067_PartA1_Server MT25067_PartA1_Client
