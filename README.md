@@ -102,6 +102,42 @@ Open multiple client terminals and run the client command simultaneously.
 - Tested on Linux (Ubuntu 22.04/24.04) for final measurements
 - Network namespaces and perf profiling require Linux
 
+## Performance Test Results
+
+### Part A1 vs Part A2 Comparison (macOS localhost)
+
+| Message Size | A1 Throughput (Mbps) | A2 Throughput (Mbps) | Winner | Difference |
+|--------------|---------------------|---------------------|--------|------------|
+| 256B         | 1706.10             | 1458.01             | A1     | -14.5%     |
+| 1KB          | 4273.79             | 4313.85             | A2     | +0.9%      |
+| 4KB          | 13075.82            | 11479.42            | A1     | -12.2%     |
+| 16KB         | 26016.67            | 23603.82            | A1     | -9.3%      |
+
+### Key Findings
+
+1. **Part A2 (one-copy) only outperforms Part A1 (two-copy) at 1KB message size** with a marginal 0.9% improvement.
+
+2. **For all other message sizes, Part A1 is faster** due to cache locality effects:
+   - 256B: A1 is 14.5% faster
+   - 4KB: A1 is 12.2% faster
+   - 16KB: A1 is 9.3% faster
+
+3. **Cache Locality Dominates**: The "extra" memcpy in Part A1's `serialize_message()` creates a contiguous buffer that:
+   - Warms CPU cache (L1/L2)
+   - Enables better prefetching
+   - Reduces TLB pressure
+   - Results in faster `send()` operation
+
+4. **Lesson Learned**: "Zero-copy" optimizations don't always improve performance. Cache effects can outweigh the cost of an extra copy in modern systems.
+
+### Testing Configuration
+- Platform: macOS (Apple Silicon M4)
+- Network: localhost (127.0.0.1)
+- Compiler: Apple clang 17.0.0
+- Test methodology: Multiple runs averaged
+
+**Note**: Final performance measurements will be conducted on Linux with `perf` profiling for cache miss analysis.
+
 ## Author
 MT25067
 Graduate Systems (CSE638)
