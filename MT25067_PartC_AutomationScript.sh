@@ -40,11 +40,15 @@ log_error() {
 # Function to check if a port is in use
 check_port() {
     local port=$1
-    if netstat -tuln 2>/dev/null | grep -q ":${port} "; then
-        return 0  # Port in use
-    else
-        return 1  # Port free
+    # Try using ss (modern replacement for netstat)
+    if ss -tuln | grep -q ":${port} "; then
+        return 0
     fi
+    # Fallback to lsof if ss fails
+    if lsof -i :$port >/dev/null 2>&1; then
+        return 0
+    fi
+    return 1
 }
 
 # Function to wait for port to be ready
