@@ -15,8 +15,7 @@ PORTS=(8080 8081 8082)  # Corresponding ports for A1, A2, A3
 
 # Output directory
 OUTPUT_DIR="experiment_results"
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-CSV_FILE="${OUTPUT_DIR}/MT25067_AllResults_${TIMESTAMP}.csv"
+CSV_FILE="${OUTPUT_DIR}/MT25067_ExperimentData.csv"  # Fixed name as per assignment
 
 # Colors for output
 RED='\033[0;31m'
@@ -40,15 +39,11 @@ log_error() {
 # Function to check if a port is in use
 check_port() {
     local port=$1
-    # Try using ss (modern replacement for netstat)
-    if ss -tuln | grep -q ":${port} "; then
-        return 0
+    if netstat -tuln 2>/dev/null | grep -q ":${port} "; then
+        return 0  # Port in use
+    else
+        return 1  # Port free
     fi
-    # Fallback to lsof if ss fails
-    if lsof -i :$port >/dev/null 2>&1; then
-        return 0
-    fi
-    return 1
 }
 
 # Function to wait for port to be ready
@@ -210,9 +205,6 @@ run_experiment() {
     
     log_info "Experiment $exp_name completed successfully"
     
-    # Clean up individual client files to save space
-    rm -f ${OUTPUT_DIR}/client_${exp_name}_*.txt
-    
     return 0
 }
 
@@ -274,6 +266,15 @@ main() {
     log_info "=== All experiments completed! ==="
     log_info "Results saved to: $CSV_FILE"
     log_info ""
+    
+    # Cleanup intermediate txt files
+    log_info "Cleaning up intermediate files..."
+    rm -f ${OUTPUT_DIR}/perf_*.txt
+    rm -f ${OUTPUT_DIR}/server_*.txt
+    rm -f ${OUTPUT_DIR}/client_*.txt
+    log_info "✓ Cleanup complete"
+    log_info ""
+    
     log_info "Summary:"
     wc -l "$CSV_FILE"
     echo ""

@@ -159,7 +159,8 @@ def plot_throughput_vs_message_size():
     
     plt.tight_layout()
     plt.savefig('MT25067_Plot1_Throughput_vs_MessageSize.pdf', dpi=300, bbox_inches='tight')
-    print("✓ Saved: MT25067_Plot1_Throughput_vs_MessageSize.pdf")
+    plt.savefig('MT25067_Plot1_Throughput_vs_MessageSize.png', dpi=300, bbox_inches='tight')
+    print("✓ Saved: MT25067_Plot1_Throughput_vs_MessageSize.pdf & .png")
     plt.close()
 
 # Plot 2: Latency vs Thread Count (for different message sizes)
@@ -189,7 +190,8 @@ def plot_latency_vs_thread_count():
     
     plt.tight_layout()
     plt.savefig('MT25067_Plot2_Latency_vs_ThreadCount.pdf', dpi=300, bbox_inches='tight')
-    print("✓ Saved: MT25067_Plot2_Latency_vs_ThreadCount.pdf")
+    plt.savefig('MT25067_Plot2_Latency_vs_ThreadCount.png', dpi=300, bbox_inches='tight')
+    print("✓ Saved: MT25067_Plot2_Latency_vs_ThreadCount.pdf & .png")
     plt.close()
 
 # Plot 3: Cache Misses vs Message Size (single thread for clarity)
@@ -230,7 +232,8 @@ def plot_cache_misses_vs_message_size():
     
     plt.tight_layout()
     plt.savefig('MT25067_Plot3_CacheMisses_vs_MessageSize.pdf', dpi=300, bbox_inches='tight')
-    print("✓ Saved: MT25067_Plot3_CacheMisses_vs_MessageSize.pdf")
+    plt.savefig('MT25067_Plot3_CacheMisses_vs_MessageSize.png', dpi=300, bbox_inches='tight')
+    print("✓ Saved: MT25067_Plot3_CacheMisses_vs_MessageSize.pdf & .png")
     plt.close()
 
 # Plot 4: CPU Cycles per Byte Transferred
@@ -260,7 +263,8 @@ def plot_cpu_cycles_per_byte():
     
     plt.tight_layout()
     plt.savefig('MT25067_Plot4_CPUCycles_per_Byte.pdf', dpi=300, bbox_inches='tight')
-    print("✓ Saved: MT25067_Plot4_CPUCycles_per_Byte.pdf")
+    plt.savefig('MT25067_Plot4_CPUCycles_per_Byte.png', dpi=300, bbox_inches='tight')
+    print("✓ Saved: MT25067_Plot4_CPUCycles_per_Byte.pdf & .png")
     plt.close()
 
 # Bonus Plot 5: Overall Comparison (16KB, varying threads)
@@ -329,7 +333,8 @@ def plot_overall_comparison():
     
     plt.tight_layout()
     plt.savefig('MT25067_Plot5_Overall_Comparison.pdf', dpi=300, bbox_inches='tight')
-    print("✓ Saved: MT25067_Plot5_Overall_Comparison.pdf")
+    plt.savefig('MT25067_Plot5_Overall_Comparison.png', dpi=300, bbox_inches='tight')
+    print("✓ Saved: MT25067_Plot5_Overall_Comparison.pdf & .png")
     plt.close()
 
 def main():
@@ -350,12 +355,14 @@ def main():
     print("=" * 60)
     print("All plots generated successfully!")
     print("=" * 60)
-    print("\nGenerated files:")
-    print("  1. MT25067_Plot1_Throughput_vs_MessageSize.pdf")
-    print("  2. MT25067_Plot2_Latency_vs_ThreadCount.pdf")
-    print("  3. MT25067_Plot3_CacheMisses_vs_MessageSize.pdf")
-    print("  4. MT25067_Plot4_CPUCycles_per_Byte.pdf")
-    print("  5. MT25067_Plot5_Overall_Comparison.pdf")
+    print("\nGenerated files (PDF and PNG formats):")
+    print("  1. MT25067_Plot1_Throughput_vs_MessageSize")
+    print("  2. MT25067_Plot2_Latency_vs_ThreadCount")
+    print("  3. MT25067_Plot3_CacheMisses_vs_MessageSize")
+    print("  4. MT25067_Plot4_CPUCycles_per_Byte")
+    print("  5. MT25067_Plot5_Overall_Comparison")
+    print("\nNote: Only PDFs will be included in the submission ZIP.")
+    print("PNGs are for preview/backup purposes.")
     print("\nThese plots are ready for inclusion in your report!")
 
 if __name__ == "__main__":
