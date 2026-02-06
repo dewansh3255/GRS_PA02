@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """
 MT25067
-Part D: Dynamic Plotting and Visualization
-Reads data directly from CSV file (no hardcoded data!)
+Part D: Plotting and Visualization
+Uses HARDCODED experimental data (no CSV reading as per assignment requirement)
+Generates PNG plots only (no PDF)
+
+System Configuration:
+- OS: Ubuntu 22.04.5 LTS (Jammy)
+- Kernel: 6.8.0-90-generic
+- CPU: Intel Core i7-12700 (12th Gen)
+- Network: Localhost (127.0.0.1)
+- Date: February 6, 2026
 """
 
 import matplotlib.pyplot as plt
-import pandas as pd
-import sys
-import os
-import glob
 
 # Set publication-quality plot style
 plt.style.use('seaborn-v0_8-darkgrid')
@@ -19,71 +23,159 @@ plt.rcParams['axes.labelsize'] = 12
 plt.rcParams['axes.titlesize'] = 14
 plt.rcParams['legend.fontsize'] = 10
 
-# System configuration
-SYSTEM_CONFIG = """
-System: Ubuntu 22.04.5 LTS
-CPU: Intel x86_64
+# System configuration string for plot annotations
+SYSTEM_CONFIG = """System: Ubuntu 22.04.5 LTS
+CPU: Intel Core i7-12700 (12th Gen)
 Kernel: 6.8.0-90-generic
 Network: Localhost (127.0.0.1)
-Date: February 2026
-"""
+Date: February 6, 2026"""
 
-def find_csv_file():
-    """Find the CSV file in possible locations"""
-    possible_paths = [
-        'experiment_results/MT25067_ExperimentData.csv',
-        'MT25067_ExperimentData.csv',
-    ]
-    
-    # Also search for timestamped files
-    timestamped = glob.glob('experiment_results/MT25067_AllResults_*.csv')
-    if timestamped:
-        possible_paths.extend(sorted(timestamped, reverse=True))  # Latest first
-    
-    for path in possible_paths:
-        if os.path.exists(path):
-            return path
-    
-    return None
+# =============================================================================
+# HARDCODED EXPERIMENTAL DATA
+# Data extracted from fresh experimental run on February 6, 2026
+# =============================================================================
+# Structure: data[implementation][message_size][num_threads] = {metrics}
 
-def load_data(csv_file):
-    """Load experimental data from CSV file"""
-    try:
-        df = pd.read_csv(csv_file)
-        print(f"✓ Loaded: {csv_file}")
-        print(f"  Rows: {len(df)}, Columns: {len(df.columns)}")
-        return df
-    except Exception as e:
-        print(f"ERROR loading CSV: {e}")
-        sys.exit(1)
+data = {
+    'A1': {
+        256: {
+            1: {'throughput': 1914.02, 'latency': 1.07, 'total_bytes': 256000,
+                'cycles': 10/1e6, 'cache_misses': 91, 'l1_misses': 31},
+            2: {'throughput': 1826.94, 'latency': 1.12, 'total_bytes': 256000,
+                'cycles': 12/1e6, 'cache_misses': 161, 'l1_misses': 17},
+            4: {'throughput': 1892.79, 'latency': 1.08, 'total_bytes': 256000,
+                'cycles': 24/1e6, 'cache_misses': 117, 'l1_misses': 44},
+            8: {'throughput': 1988.35, 'latency': 1.03, 'total_bytes': 256000,
+                'cycles': 45/1e6, 'cache_misses': 163, 'l1_misses': 72}
+        },
+        1024: {
+            1: {'throughput': 7204.93, 'latency': 1.14, 'total_bytes': 1024000,
+                'cycles': 11/1e6, 'cache_misses': 108, 'l1_misses': 33},
+            2: {'throughput': 6775.85, 'latency': 1.21, 'total_bytes': 1024000,
+                'cycles': 17/1e6, 'cache_misses': 119, 'l1_misses': 40},
+            4: {'throughput': 6770.25, 'latency': 1.21, 'total_bytes': 1024000,
+                'cycles': 29/1e6, 'cache_misses': 143, 'l1_misses': 80},
+            8: {'throughput': 6965.99, 'latency': 1.18, 'total_bytes': 1024000,
+                'cycles': 54/1e6, 'cache_misses': 157, 'l1_misses': 146}
+        },
+        4096: {
+            1: {'throughput': 19298.00, 'latency': 1.70, 'total_bytes': 4096000,
+                'cycles': 15/1e6, 'cache_misses': 157, 'l1_misses': 41},
+            2: {'throughput': 19207.50, 'latency': 1.71, 'total_bytes': 4096000,
+                'cycles': 27/1e6, 'cache_misses': 221, 'l1_misses': 69},
+            4: {'throughput': 19051.16, 'latency': 1.72, 'total_bytes': 4096000,
+                'cycles': 45/1e6, 'cache_misses': 156, 'l1_misses': 234},
+            8: {'throughput': 25680.25, 'latency': 1.28, 'total_bytes': 4096000,
+                'cycles': 79/1e6, 'cache_misses': 247, 'l1_misses': 433}
+        },
+        16384: {
+            1: {'throughput': 53564.36, 'latency': 2.45, 'total_bytes': 16384000,
+                'cycles': 22/1e6, 'cache_misses': 170, 'l1_misses': 439},
+            2: {'throughput': 27507.24, 'latency': 4.76, 'total_bytes': 16384000,
+                'cycles': 72/1e6, 'cache_misses': 493, 'l1_misses': 333},
+            4: {'throughput': 51643.81, 'latency': 2.54, 'total_bytes': 16384000,
+                'cycles': 78/1e6, 'cache_misses': 419, 'l1_misses': 1},
+            8: {'throughput': 34177.84, 'latency': 3.83, 'total_bytes': 16384000,
+                'cycles': 188/1e6, 'cache_misses': 461, 'l1_misses': 3}
+        }
+    },
+    'A2': {
+        256: {
+            1: {'throughput': 1537.54, 'latency': 1.33, 'total_bytes': 256000,
+                'cycles': 12/1e6, 'cache_misses': 97, 'l1_misses': 40},
+            2: {'throughput': 1587.60, 'latency': 1.29, 'total_bytes': 256000,
+                'cycles': 21/1e6, 'cache_misses': 160, 'l1_misses': 70},
+            4: {'throughput': 1510.32, 'latency': 1.36, 'total_bytes': 256000,
+                'cycles': 34/1e6, 'cache_misses': 107, 'l1_misses': 61},
+            8: {'throughput': 1759.45, 'latency': 1.16, 'total_bytes': 256000,
+                'cycles': 51/1e6, 'cache_misses': 113, 'l1_misses': 80}
+        },
+        1024: {
+            1: {'throughput': 6989.76, 'latency': 1.17, 'total_bytes': 1024000,
+                'cycles': 12/1e6, 'cache_misses': 87, 'l1_misses': 32},
+            2: {'throughput': 8578.01, 'latency': 0.95, 'total_bytes': 1024000,
+                'cycles': 16/1e6, 'cache_misses': 132, 'l1_misses': 35},
+            4: {'throughput': 4508.53, 'latency': 1.82, 'total_bytes': 1024000,
+                'cycles': 42/1e6, 'cache_misses': 140, 'l1_misses': 101},
+            8: {'throughput': 5744.74, 'latency': 1.43, 'total_bytes': 1024000,
+                'cycles': 72/1e6, 'cache_misses': 293, 'l1_misses': 192}
+        },
+        4096: {
+            1: {'throughput': 17201.05, 'latency': 1.91, 'total_bytes': 4096000,
+                'cycles': 18/1e6, 'cache_misses': 96, 'l1_misses': 54},
+            2: {'throughput': 15226.77, 'latency': 2.15, 'total_bytes': 4096000,
+                'cycles': 33/1e6, 'cache_misses': 270, 'l1_misses': 97},
+            4: {'throughput': 15086.56, 'latency': 2.17, 'total_bytes': 4096000,
+                'cycles': 51/1e6, 'cache_misses': 175, 'l1_misses': 253},
+            8: {'throughput': 21236.55, 'latency': 1.54, 'total_bytes': 4096000,
+                'cycles': 101/1e6, 'cache_misses': 249, 'l1_misses': 536}
+        },
+        16384: {
+            1: {'throughput': 47801.60, 'latency': 2.74, 'total_bytes': 16384000,
+                'cycles': 23/1e6, 'cache_misses': 152, 'l1_misses': 450},
+            2: {'throughput': 39432.01, 'latency': 3.32, 'total_bytes': 16384000,
+                'cycles': 48/1e6, 'cache_misses': 213, 'l1_misses': 896},
+            4: {'throughput': 28419.77, 'latency': 4.61, 'total_bytes': 16384000,
+                'cycles': 114/1e6, 'cache_misses': 154, 'l1_misses': 2},
+            8: {'throughput': 30117.65, 'latency': 4.35, 'total_bytes': 16384000,
+                'cycles': 223/1e6, 'cache_misses': 591, 'l1_misses': 3}
+        }
+    },
+    'A3': {
+        256: {
+            1: {'throughput': 714.09, 'latency': 2.87, 'total_bytes': 256000,
+                'cycles': 100/1e6, 'cache_misses': 186, 'l1_misses': 183},
+            2: {'throughput': 628.80, 'latency': 3.26, 'total_bytes': 256000,
+                'cycles': 446/1e6, 'cache_misses': 492, 'l1_misses': 352},
+            4: {'throughput': 812.70, 'latency': 2.52, 'total_bytes': 256000,
+                'cycles': 452/1e6, 'cache_misses': 245, 'l1_misses': 1},
+            8: {'throughput': 768.19, 'latency': 2.67, 'total_bytes': 256000,
+                'cycles': 704/1e6, 'cache_misses': 181, 'l1_misses': 2}
+        },
+        1024: {
+            1: {'throughput': 2632.39, 'latency': 3.11, 'total_bytes': 1024000,
+                'cycles': 89/1e6, 'cache_misses': 129, 'l1_misses': 254},
+            2: {'throughput': 1722.09, 'latency': 4.76, 'total_bytes': 1024000,
+                'cycles': 422/1e6, 'cache_misses': 219, 'l1_misses': 406},
+            4: {'throughput': 1722.09, 'latency': 4.76, 'total_bytes': 1024000,
+                'cycles': 781/1e6, 'cache_misses': 267, 'l1_misses': 886},
+            8: {'throughput': 2131.67, 'latency': 3.84, 'total_bytes': 1024000,
+                'cycles': 751/1e6, 'cache_misses': 421, 'l1_misses': 2}
+        },
+        4096: {
+            1: {'throughput': 8625.43, 'latency': 3.80, 'total_bytes': 4096000,
+                'cycles': 224/1e6, 'cache_misses': 517, 'l1_misses': 273},
+            2: {'throughput': 8391.29, 'latency': 3.90, 'total_bytes': 4096000,
+                'cycles': 171/1e6, 'cache_misses': 320, 'l1_misses': 470},
+            4: {'throughput': 8287.30, 'latency': 3.95, 'total_bytes': 4096000,
+                'cycles': 388/1e6, 'cache_misses': 182, 'l1_misses': 1},
+            8: {'throughput': 10369.62, 'latency': 3.16, 'total_bytes': 4096000,
+                'cycles': 902/1e6, 'cache_misses': 289, 'l1_misses': 3}
+        },
+        16384: {
+            1: {'throughput': 22680.74, 'latency': 5.78, 'total_bytes': 16384000,
+                'cycles': 234/1e6, 'cache_misses': 302, 'l1_misses': 338},
+            2: {'throughput': 27386.54, 'latency': 4.79, 'total_bytes': 16384000,
+                'cycles': 246/1e6, 'cache_misses': 470, 'l1_misses': 1},
+            4: {'throughput': 28036.79, 'latency': 4.67, 'total_bytes': 16384000,
+                'cycles': 366/1e6, 'cache_misses': 278, 'l1_misses': 2},
+            8: {'throughput': 21711.45, 'latency': 6.04, 'total_bytes': 16384000,
+                'cycles': 885/1e6, 'cache_misses': 562, 'l1_misses': 5}
+        }
+    }
+}
 
-def organize_data(df):
-    """Organize data by implementation, message size, and thread count"""
-    data = {}
-    
-    for impl in df['Implementation'].unique():
-        data[impl] = {}
-        impl_data = df[df['Implementation'] == impl]
-        
-        for size in sorted(impl_data['MessageSize'].unique()):
-            data[impl][size] = {}
-            size_data = impl_data[impl_data['MessageSize'] == size]
-            
-            for threads in sorted(size_data['NumThreads'].unique()):
-                thread_data = size_data[size_data['NumThreads'] == threads].iloc[0]
-                data[impl][size][threads] = {
-                    'throughput': thread_data['Throughput_Mbps'],
-                    'latency': thread_data['Latency_us'],
-                    'cycles': thread_data['CPU_Cycles'] / 1e6,  # Millions
-                    'cache_misses': thread_data['CacheMisses'],
-                    'l1_misses': thread_data['L1_Misses'],
-                    'total_bytes': thread_data['TotalBytes']
-                }
-    
-    return data
+# Experimental parameters
+MESSAGE_SIZES = [256, 1024, 4096, 16384]
+THREAD_COUNTS = [1, 2, 4, 8]
+IMPLEMENTATIONS = ['A1', 'A2', 'A3']
 
-# Plot 1: Throughput vs Message Size
-def plot_throughput_vs_message_size(data, message_sizes, thread_counts, implementations):
+# =============================================================================
+# PLOTTING FUNCTIONS
+# =============================================================================
+
+def plot_throughput_vs_message_size():
+    """Plot 1: Throughput vs Message Size for different thread counts"""
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     fig.suptitle('Throughput vs Message Size\n(Different Thread Counts)', 
                  fontsize=16, fontweight='bold')
@@ -92,25 +184,24 @@ def plot_throughput_vs_message_size(data, message_sizes, thread_counts, implemen
     markers = {'A1': 'o', 'A2': 's', 'A3': '^'}
     labels = {'A1': 'A1 (Two-Copy)', 'A2': 'A2 (One-Copy)', 'A3': 'A3 (Zero-Copy)'}
     
-    for idx, threads in enumerate(thread_counts):
+    for idx, threads in enumerate(THREAD_COUNTS):
         ax = axes[idx // 2, idx % 2]
         
-        for impl in implementations:
-            throughputs = [data[impl].get(size, {}).get(threads, {}).get('throughput', 0) 
-                          for size in message_sizes]
+        for impl in IMPLEMENTATIONS:
+            throughputs = [data[impl][size][threads]['throughput'] 
+                          for size in MESSAGE_SIZES]
             
-            ax.plot(message_sizes, throughputs, 
-                   marker=markers.get(impl, 'o'), 
-                   color=colors.get(impl, 'gray'),
+            ax.plot(MESSAGE_SIZES, throughputs, 
+                   marker=markers[impl], 
+                   color=colors[impl],
                    linewidth=2, markersize=8, 
-                   label=labels.get(impl, impl))
+                   label=labels[impl])
             
             # Add value annotations
-            for size, thr in zip(message_sizes, throughputs):
-                if thr > 0:
-                    ax.annotate(f'{thr:.0f}', (size, thr), 
-                               textcoords="offset points", xytext=(0,5), 
-                               ha='center', fontsize=8)
+            for size, thr in zip(MESSAGE_SIZES, throughputs):
+                ax.annotate(f'{thr:.0f}', (size, thr), 
+                           textcoords="offset points", xytext=(0,5), 
+                           ha='center', fontsize=8)
         
         ax.set_xlabel('Message Size (bytes)', fontweight='bold')
         ax.set_ylabel('Throughput (Mbps)', fontweight='bold')
@@ -120,13 +211,12 @@ def plot_throughput_vs_message_size(data, message_sizes, thread_counts, implemen
         ax.legend()
     
     plt.tight_layout()
-    plt.savefig('MT25067_Plot1_Throughput_vs_MessageSize.pdf', dpi=300, bbox_inches='tight')
     plt.savefig('MT25067_Plot1_Throughput_vs_MessageSize.png', dpi=300, bbox_inches='tight')
-    print("✓ Saved: MT25067_Plot1_Throughput_vs_MessageSize.pdf & .png")
+    print("✓ Saved: MT25067_Plot1_Throughput_vs_MessageSize.png")
     plt.close()
 
-# Plot 2: Latency vs Thread Count
-def plot_latency_vs_thread_count(data, message_sizes, thread_counts, implementations):
+def plot_latency_vs_thread_count():
+    """Plot 2: Latency vs Thread Count for different message sizes"""
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     fig.suptitle('Latency vs Thread Count\n(Different Message Sizes)', 
                  fontsize=16, fontweight='bold')
@@ -135,34 +225,33 @@ def plot_latency_vs_thread_count(data, message_sizes, thread_counts, implementat
     markers = {'A1': 'o', 'A2': 's', 'A3': '^'}
     labels = {'A1': 'A1 (Two-Copy)', 'A2': 'A2 (One-Copy)', 'A3': 'A3 (Zero-Copy)'}
     
-    for idx, msg_size in enumerate(message_sizes):
+    for idx, msg_size in enumerate(MESSAGE_SIZES):
         ax = axes[idx // 2, idx % 2]
         
-        for impl in implementations:
-            latencies = [data[impl].get(msg_size, {}).get(t, {}).get('latency', 0) 
-                        for t in thread_counts]
+        for impl in IMPLEMENTATIONS:
+            latencies = [data[impl][msg_size][t]['latency'] 
+                        for t in THREAD_COUNTS]
             
-            ax.plot(thread_counts, latencies, 
-                   marker=markers.get(impl, 'o'),
-                   color=colors.get(impl, 'gray'),
+            ax.plot(THREAD_COUNTS, latencies, 
+                   marker=markers[impl],
+                   color=colors[impl],
                    linewidth=2, markersize=8, 
-                   label=labels.get(impl, impl))
+                   label=labels[impl])
         
         ax.set_xlabel('Number of Threads', fontweight='bold')
         ax.set_ylabel('Average Latency (µs)', fontweight='bold')
         ax.set_title(f'Message Size: {msg_size} bytes', fontweight='bold')
-        ax.set_xticks(thread_counts)
+        ax.set_xticks(THREAD_COUNTS)
         ax.grid(True, alpha=0.3)
         ax.legend()
     
     plt.tight_layout()
-    plt.savefig('MT25067_Plot2_Latency_vs_ThreadCount.pdf', dpi=300, bbox_inches='tight')
     plt.savefig('MT25067_Plot2_Latency_vs_ThreadCount.png', dpi=300, bbox_inches='tight')
-    print("✓ Saved: MT25067_Plot2_Latency_vs_ThreadCount.pdf & .png")
+    print("✓ Saved: MT25067_Plot2_Latency_vs_ThreadCount.png")
     plt.close()
 
-# Plot 3: Cache Misses vs Message Size
-def plot_cache_misses_vs_message_size(data, message_sizes, implementations):
+def plot_cache_misses_vs_message_size():
+    """Plot 3: Cache Misses (LLC and L1) vs Message Size for 1 thread"""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
     fig.suptitle('Cache Misses vs Message Size (1 Thread)', 
                  fontsize=16, fontweight='bold')
@@ -173,14 +262,14 @@ def plot_cache_misses_vs_message_size(data, message_sizes, implementations):
     threads = 1
     
     # LLC Cache Misses
-    for impl in implementations:
-        cache_misses = [data[impl].get(size, {}).get(threads, {}).get('cache_misses', 0) 
-                       for size in message_sizes]
-        ax1.plot(message_sizes, cache_misses, 
-                marker=markers.get(impl, 'o'),
-                color=colors.get(impl, 'gray'),
+    for impl in IMPLEMENTATIONS:
+        cache_misses = [data[impl][size][threads]['cache_misses'] 
+                       for size in MESSAGE_SIZES]
+        ax1.plot(MESSAGE_SIZES, cache_misses, 
+                marker=markers[impl],
+                color=colors[impl],
                 linewidth=2, markersize=8, 
-                label=labels.get(impl, impl))
+                label=labels[impl])
     
     ax1.set_xlabel('Message Size (bytes)', fontweight='bold')
     ax1.set_ylabel('LLC Cache Misses', fontweight='bold')
@@ -190,14 +279,14 @@ def plot_cache_misses_vs_message_size(data, message_sizes, implementations):
     ax1.legend()
     
     # L1 Cache Misses
-    for impl in implementations:
-        l1_misses = [data[impl].get(size, {}).get(threads, {}).get('l1_misses', 0) 
-                    for size in message_sizes]
-        ax2.plot(message_sizes, l1_misses, 
-                marker=markers.get(impl, 'o'),
-                color=colors.get(impl, 'gray'),
+    for impl in IMPLEMENTATIONS:
+        l1_misses = [data[impl][size][threads]['l1_misses'] 
+                    for size in MESSAGE_SIZES]
+        ax2.plot(MESSAGE_SIZES, l1_misses, 
+                marker=markers[impl],
+                color=colors[impl],
                 linewidth=2, markersize=8, 
-                label=labels.get(impl, impl))
+                label=labels[impl])
     
     ax2.set_xlabel('Message Size (bytes)', fontweight='bold')
     ax2.set_ylabel('L1 D-Cache Misses', fontweight='bold')
@@ -207,13 +296,12 @@ def plot_cache_misses_vs_message_size(data, message_sizes, implementations):
     ax2.legend()
     
     plt.tight_layout()
-    plt.savefig('MT25067_Plot3_CacheMisses_vs_MessageSize.pdf', dpi=300, bbox_inches='tight')
     plt.savefig('MT25067_Plot3_CacheMisses_vs_MessageSize.png', dpi=300, bbox_inches='tight')
-    print("✓ Saved: MT25067_Plot3_CacheMisses_vs_MessageSize.pdf & .png")
+    print("✓ Saved: MT25067_Plot3_CacheMisses_vs_MessageSize.png")
     plt.close()
 
-# Plot 4: CPU Cycles per Byte
-def plot_cpu_cycles_per_byte(data, message_sizes, thread_counts, implementations):
+def plot_cpu_cycles_per_byte():
+    """Plot 4: CPU Cycles per Byte Transferred for different thread counts"""
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     fig.suptitle('CPU Cycles per Byte Transferred\n(Different Thread Counts)', 
                  fontsize=16, fontweight='bold')
@@ -222,22 +310,22 @@ def plot_cpu_cycles_per_byte(data, message_sizes, thread_counts, implementations
     markers = {'A1': 'o', 'A2': 's', 'A3': '^'}
     labels = {'A1': 'A1 (Two-Copy)', 'A2': 'A2 (One-Copy)', 'A3': 'A3 (Zero-Copy)'}
     
-    for idx, threads in enumerate(thread_counts):
+    for idx, threads in enumerate(THREAD_COUNTS):
         ax = axes[idx // 2, idx % 2]
         
-        for impl in implementations:
+        for impl in IMPLEMENTATIONS:
             cpb = []
-            for size in message_sizes:
-                d = data[impl].get(size, {}).get(threads, {})
-                cycles = d.get('cycles', 0) * 1e6
-                total_bytes = d.get('total_bytes', 1)
+            for size in MESSAGE_SIZES:
+                d = data[impl][size][threads]
+                cycles = d['cycles'] * 1e6  # Convert back to actual cycles
+                total_bytes = d['total_bytes']
                 cpb.append(cycles / total_bytes if total_bytes > 0 else 0)
             
-            ax.plot(message_sizes, cpb, 
-                   marker=markers.get(impl, 'o'),
-                   color=colors.get(impl, 'gray'),
+            ax.plot(MESSAGE_SIZES, cpb, 
+                   marker=markers[impl],
+                   color=colors[impl],
                    linewidth=2, markersize=8, 
-                   label=labels.get(impl, impl))
+                   label=labels[impl])
         
         ax.set_xlabel('Message Size (bytes)', fontweight='bold')
         ax.set_ylabel('CPU Cycles per Byte', fontweight='bold')
@@ -247,15 +335,14 @@ def plot_cpu_cycles_per_byte(data, message_sizes, thread_counts, implementations
         ax.legend()
     
     plt.tight_layout()
-    plt.savefig('MT25067_Plot4_CPUCycles_per_Byte.pdf', dpi=300, bbox_inches='tight')
     plt.savefig('MT25067_Plot4_CPUCycles_per_Byte.png', dpi=300, bbox_inches='tight')
-    print("✓ Saved: MT25067_Plot4_CPUCycles_per_Byte.pdf & .png")
+    print("✓ Saved: MT25067_Plot4_CPUCycles_per_Byte.png")
     plt.close()
 
-# Plot 5: Overall Comparison
-def plot_overall_comparison(data, message_sizes, thread_counts, implementations):
+def plot_overall_comparison():
+    """Plot 5: Overall Comparison for largest message size (16KB)"""
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
-    msg_size = max(message_sizes)
+    msg_size = 16384
     
     fig.suptitle(f'Comprehensive Comparison - {msg_size}B Messages\nAll Metrics vs Thread Count', 
                  fontsize=16, fontweight='bold')
@@ -264,106 +351,108 @@ def plot_overall_comparison(data, message_sizes, thread_counts, implementations)
     markers = {'A1': 'o', 'A2': 's', 'A3': '^'}
     
     # Throughput
-    for impl in implementations:
-        vals = [data[impl].get(msg_size, {}).get(t, {}).get('throughput', 0) for t in thread_counts]
-        ax1.plot(thread_counts, vals, marker=markers[impl], color=colors[impl],
+    for impl in IMPLEMENTATIONS:
+        vals = [data[impl][msg_size][t]['throughput'] for t in THREAD_COUNTS]
+        ax1.plot(THREAD_COUNTS, vals, marker=markers[impl], color=colors[impl],
                 linewidth=2, markersize=8, label=impl)
     ax1.set_xlabel('Threads', fontweight='bold')
     ax1.set_ylabel('Throughput (Mbps)', fontweight='bold')
     ax1.set_title('Throughput', fontweight='bold')
     ax1.legend()
     ax1.grid(True, alpha=0.3)
+    ax1.set_xticks(THREAD_COUNTS)
     
     # Latency
-    for impl in implementations:
-        vals = [data[impl].get(msg_size, {}).get(t, {}).get('latency', 0) for t in thread_counts]
-        ax2.plot(thread_counts, vals, marker=markers[impl], color=colors[impl],
+    for impl in IMPLEMENTATIONS:
+        vals = [data[impl][msg_size][t]['latency'] for t in THREAD_COUNTS]
+        ax2.plot(THREAD_COUNTS, vals, marker=markers[impl], color=colors[impl],
                 linewidth=2, markersize=8, label=impl)
     ax2.set_xlabel('Threads', fontweight='bold')
     ax2.set_ylabel('Latency (µs)', fontweight='bold')
     ax2.set_title('Latency', fontweight='bold')
     ax2.legend()
     ax2.grid(True, alpha=0.3)
+    ax2.set_xticks(THREAD_COUNTS)
     
     # CPU Cycles
-    for impl in implementations:
-        vals = [data[impl].get(msg_size, {}).get(t, {}).get('cycles', 0) for t in thread_counts]
-        ax3.plot(thread_counts, vals, marker=markers[impl], color=colors[impl],
+    for impl in IMPLEMENTATIONS:
+        vals = [data[impl][msg_size][t]['cycles'] for t in THREAD_COUNTS]
+        ax3.plot(THREAD_COUNTS, vals, marker=markers[impl], color=colors[impl],
                 linewidth=2, markersize=8, label=impl)
     ax3.set_xlabel('Threads', fontweight='bold')
     ax3.set_ylabel('CPU Cycles (Millions)', fontweight='bold')
     ax3.set_title('CPU Cycles', fontweight='bold')
     ax3.legend()
     ax3.grid(True, alpha=0.3)
+    ax3.set_xticks(THREAD_COUNTS)
     
     # Cache Misses
-    for impl in implementations:
-        vals = [data[impl].get(msg_size, {}).get(t, {}).get('cache_misses', 0) for t in thread_counts]
-        ax4.plot(thread_counts, vals, marker=markers[impl], color=colors[impl],
+    for impl in IMPLEMENTATIONS:
+        vals = [data[impl][msg_size][t]['cache_misses'] for t in THREAD_COUNTS]
+        ax4.plot(THREAD_COUNTS, vals, marker=markers[impl], color=colors[impl],
                 linewidth=2, markersize=8, label=impl)
     ax4.set_xlabel('Threads', fontweight='bold')
     ax4.set_ylabel('Cache Misses', fontweight='bold')
     ax4.set_title('LLC Cache Misses', fontweight='bold')
     ax4.legend()
     ax4.grid(True, alpha=0.3)
+    ax4.set_xticks(THREAD_COUNTS)
     
     plt.tight_layout()
-    plt.savefig('MT25067_Plot5_Overall_Comparison.pdf', dpi=300, bbox_inches='tight')
     plt.savefig('MT25067_Plot5_Overall_Comparison.png', dpi=300, bbox_inches='tight')
-    print("✓ Saved: MT25067_Plot5_Overall_Comparison.pdf & .png")
+    print("✓ Saved: MT25067_Plot5_Overall_Comparison.png")
     plt.close()
 
+# =============================================================================
+# MAIN EXECUTION
+# =============================================================================
+
 def main():
-    print("=" * 60)
-    print("MT25067 - Part D: Dynamic Plotting from CSV Data")
-    print("=" * 60)
-    print(f"System Configuration:\n{SYSTEM_CONFIG}")
-    
-    # Find CSV file
-    csv_file = find_csv_file()
-    if not csv_file:
-        print("\nERROR: CSV file not found!")
-        print("\nSearched locations:")
-        print("  - experiment_results/MT25067_ExperimentData.csv")
-        print("  - MT25067_ExperimentData.csv")
-        print("  - experiment_results/MT25067_AllResults_*.csv")
-        print("\nPlease run the automation script first:")
-        print("  sudo bash MT25067_PartC_AutomationScript.sh")
-        sys.exit(1)
-    
-    # Load and organize data
-    df = load_data(csv_file)
-    data = organize_data(df)
-    
-    message_sizes = sorted(df['MessageSize'].unique())
-    thread_counts = sorted(df['NumThreads'].unique())
-    implementations = sorted(df['Implementation'].unique())
+    print("=" * 70)
+    print("MT25067 - Part D: Plotting and Visualization")
+    print("=" * 70)
+    print(SYSTEM_CONFIG)
+    print("\n" + "=" * 70)
+    print("Using HARDCODED experimental data (no CSV reading)")
+    print("Data from fresh experimental run: February 6, 2026, 13:57")
+    print("=" * 70)
     
     print(f"\nData summary:")
-    print(f"  Implementations: {implementations}")
-    print(f"  Message sizes: {message_sizes}")
-    print(f"  Thread counts: {thread_counts}")
-    print(f"  Total experiments: {len(df)}")
-    print("\nGenerating plots...")
+    print(f"  Implementations: {IMPLEMENTATIONS}")
+    print(f"  Message sizes: {MESSAGE_SIZES} bytes")
+    print(f"  Thread counts: {THREAD_COUNTS}")
+    print(f"  Total data points: {len(IMPLEMENTATIONS) * len(MESSAGE_SIZES) * len(THREAD_COUNTS)}")
+    
+    print("\nGenerating PNG plots (no PDF)...")
     print()
     
-    plot_throughput_vs_message_size(data, message_sizes, thread_counts, implementations)
-    plot_latency_vs_thread_count(data, message_sizes, thread_counts, implementations)
-    plot_cache_misses_vs_message_size(data, message_sizes, implementations)
-    plot_cpu_cycles_per_byte(data, message_sizes, thread_counts, implementations)
-    plot_overall_comparison(data, message_sizes, thread_counts, implementations)
+    # Generate all plots
+    plot_throughput_vs_message_size()
+    plot_latency_vs_thread_count()
+    plot_cache_misses_vs_message_size()
+    plot_cpu_cycles_per_byte()
+    plot_overall_comparison()
     
     print()
-    print("=" * 60)
+    print("=" * 70)
     print("All plots generated successfully!")
-    print("=" * 60)
-    print("\nGenerated files (PDF and PNG):")
-    print("  1. MT25067_Plot1_Throughput_vs_MessageSize")
-    print("  2. MT25067_Plot2_Latency_vs_ThreadCount")
-    print("  3. MT25067_Plot3_CacheMisses_vs_MessageSize")
-    print("  4. MT25067_Plot4_CPUCycles_per_Byte")
-    print("  5. MT25067_Plot5_Overall_Comparison")
-    print("\nPDFs for submission, PNGs for preview.")
+    print("=" * 70)
+    print("\nGenerated files (PNG only):")
+    print("  1. MT25067_Plot1_Throughput_vs_MessageSize.png")
+    print("  2. MT25067_Plot2_Latency_vs_ThreadCount.png")
+    print("  3. MT25067_Plot3_CacheMisses_vs_MessageSize.png")
+    print("  4. MT25067_Plot4_CPUCycles_per_Byte.png")
+    print("  5. MT25067_Plot5_Overall_Comparison.png")
+    print("\n" + "=" * 70)
+    print("SUBMISSION REMINDERS:")
+    print("=" * 70)
+    print("✅ Embed these PNG plots in your report PDF")
+    print("❌ DO NOT include PNG files in your submission zip!")
+    print("❌ DO NOT push PNG files to GitHub!")
+    print("\nThe plots should ONLY appear embedded in your report.")
+    print("After embedding plots in report, DELETE all .png files:")
+    print("  $ rm -f MT25067_Plot*.png")
+    print("=" * 70)
 
 if __name__ == "__main__":
     main()
