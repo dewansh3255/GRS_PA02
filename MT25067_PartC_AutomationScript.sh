@@ -2,7 +2,7 @@
 # MT25067
 # Part C: Automated Experiment Runner
 # Runs all combinations of implementations, message sizes, and thread counts
-# Collects perf statistics and saves to CSV
+# Collects perf statistics and saves to CSV in main directory
 
 set -e  # Exit on error
 
@@ -13,9 +13,10 @@ NUM_MESSAGES=1000  # Reduced for faster testing, increase for production
 IMPLEMENTATIONS=("A1" "A2" "A3")
 PORTS=(8080 8081 8082)  # Corresponding ports for A1, A2, A3
 
-# Output directory
-OUTPUT_DIR="experiment_results"
-CSV_FILE="${OUTPUT_DIR}/MT25067_ExperimentData.csv"  # Fixed name as per assignment
+# Output directory for temporary files
+TEMP_DIR="experiment_results"
+# CSV file in main directory (no subfolders as per assignment requirement)
+CSV_FILE="MT25067_ExperimentData.csv"
 
 # Colors for output
 RED='\033[0;31m'
@@ -144,10 +145,10 @@ run_experiment() {
     local exp_name="${impl}_${msg_size}B_${num_threads}T"
     log_info "Running experiment: $exp_name"
     
-    # File names
-    local perf_output="${OUTPUT_DIR}/perf_${exp_name}.txt"
-    local server_output="${OUTPUT_DIR}/server_${exp_name}.txt"
-    local client_output="${OUTPUT_DIR}/client_${exp_name}.txt"
+    # File names (all in temp directory)
+    local perf_output="${TEMP_DIR}/perf_${exp_name}.txt"
+    local server_output="${TEMP_DIR}/server_${exp_name}.txt"
+    local client_output="${TEMP_DIR}/client_${exp_name}.txt"
     
     # Clean up any existing processes on this port
     kill_on_port $port
@@ -174,7 +175,7 @@ run_experiment() {
     local client_pids=()
     for ((i=1; i<=$num_threads; i++)); do
         ./MT25067_Part${impl}_Client $msg_size $NUM_MESSAGES \
-            > "${OUTPUT_DIR}/client_${exp_name}_${i}.txt" 2>&1 &
+            > "${TEMP_DIR}/client_${exp_name}_${i}.txt" 2>&1 &
         client_pids+=($!)
     done
     
@@ -196,7 +197,7 @@ run_experiment() {
     kill_on_port $port
     
     # Parse results from first client (they should all be similar)
-    local client_metrics=$(parse_client_output "${OUTPUT_DIR}/client_${exp_name}_1.txt")
+    local client_metrics=$(parse_client_output "${TEMP_DIR}/client_${exp_name}_1.txt")
     
     # Build CSV line
     local csv_line="${impl},${msg_size},${num_threads},${client_metrics}"
@@ -204,7 +205,7 @@ run_experiment() {
     # Parse perf output and complete CSV line
     local complete_line=$(parse_perf_output "$perf_output" "$csv_line")
     
-    # Append to CSV
+    # Append to CSV in main directory
     echo "$complete_line" >> "$CSV_FILE"
     
     log_info "Experiment $exp_name completed successfully"
@@ -215,10 +216,9 @@ run_experiment() {
 # Main execution
 main() {
     log_info "=== MT25067 Automated Experiment Runner ==="
-    log_info "Timestamp: $TIMESTAMP"
     
-    # Create output directory
-    mkdir -p "$OUTPUT_DIR"
+    # Create temp directory for intermediate files
+    mkdir -p "$TEMP_DIR"
     
     # Check if binaries exist
     for impl in "${IMPLEMENTATIONS[@]}"; do
@@ -228,11 +228,11 @@ main() {
         fi
     done
     
-    # Create CSV header
+    # Create CSV header in main directory
     echo "Implementation,MessageSize,NumThreads,Throughput_Mbps,Latency_us,TotalBytes,CPU_Cycles,Instructions,CacheMisses,L1_Misses,ContextSwitches,TimeElapsed_sec" > "$CSV_FILE"
     
-    log_info "CSV file: $CSV_FILE"
-    log_info "Output directory: $OUTPUT_DIR"
+    log_info "CSV file: $CSV_FILE (main directory)"
+    log_info "Temp directory: $TEMP_DIR"
     
     # Count total experiments
     local total_experiments=$((${#IMPLEMENTATIONS[@]} * ${#MESSAGE_SIZES[@]} * ${#THREAD_COUNTS[@]}))
@@ -268,15 +268,13 @@ main() {
     done
     
     log_info "=== All experiments completed! ==="
-    log_info "Results saved to: $CSV_FILE"
+    log_info "Results saved to: $CSV_FILE (main directory)"
     log_info ""
     
-    # Cleanup intermediate txt files
-    log_info "Cleaning up intermediate files..."
-    rm -f ${OUTPUT_DIR}/perf_*.txt
-    rm -f ${OUTPUT_DIR}/server_*.txt
-    rm -f ${OUTPUT_DIR}/client_*.txt
-    log_info "✓ Cleanup complete"
+    # Cleanup temp directory and all intermediate files
+    log_info "Cleaning up temporary files..."
+    rm -rf "$TEMP_DIR"
+    log_info "✓ Cleanup complete (removed $TEMP_DIR directory)"
     log_info ""
     
     log_info "Summary:"
