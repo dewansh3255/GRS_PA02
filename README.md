@@ -6,16 +6,6 @@ Analysis of Network I/O Primitives: Two-Copy, One-Copy, and Zero-Copy Implementa
 
 ---
 
-## 📋 Quick Links
-
-- **GitHub Repository:** https://github.com/dewansh3255/GRS_PA02
-- **Complete Report:** [MT25067_Complete_Report.md](MT25067_Complete_Report.md)
-- **Analysis Answers:** [MT25067_PartE_Analysis.md](MT25067_PartE_Analysis.md)
-- **Student:** MT25067
-- **Deadline:** February 7, 2026
-
----
-
 ## 🚀 Quick Start
 
 ```bash
@@ -36,18 +26,20 @@ python3 MT25067_PartD_Plots.py
 ## 📁 Repository Structure
 
 ```
-├── MT25067_PartA1_Server.c        # Two-copy implementation
-├── MT25067_PartA1_Client.c
-├── MT25067_PartA2_Server.c        # One-copy (scatter-gather)
-├── MT25067_PartA2_Client.c
-├── MT25067_PartA3_Server.c        # Zero-copy (MSG_ZEROCOPY)
-├── MT25067_PartA3_Client.c
-├── MT25067_PartC_AutomationScript.sh  # Automation script
-├── MT25067_PartD_Plots.py         # Plotting script
-├── MT25067_PartE_Analysis.md      # Analysis answers
-├── MT25067_Complete_Report.md     # Full report
-├── Makefile
-└── README.md (this file)
+MT25067_PA02/
+├── MT25067_PartA1_Server.c          # Two-copy server
+├── MT25067_PartA1_Client.c          # Two-copy client
+├── MT25067_PartA2_Server.c          # One-copy server (sendmsg)
+├── MT25067_PartA2_Client.c          # One-copy client
+├── MT25067_PartA3_Server.c          # Zero-copy server (MSG_ZEROCOPY)
+├── MT25067_PartA3_Client.c          # Zero-copy client
+├── MT25067_PartC_AutomationScript.sh # Experiment automation
+├── MT25067_PartD_Plots.py           # Plotting script (hardcoded data)
+├── MT25067_PartE_Analysis.md        # Analysis and reasoning
+├── MT25067_ExperimentData.csv       # Raw experimental data
+├── MT25067_Report.md                # Assignment report
+├── Makefile                         # Build system
+└── README.md                        # This file
 ```
 
 ---
@@ -173,61 +165,6 @@ python3 MT25067_PartD_Plots.py
 
 ---
 
-## 🏆 Performance Summary
-
-### Best Results (16KB, Linux x86_64)
-
-| Threads | A1 (Mbps) | A2 (Mbps) | A3 (Mbps) | Winner |
-|---------|-----------|-----------|-----------|--------|
-| 1 | 36,725 | 44,582 | 29,081 | **A2** |
-| 4 | 27,536 | **52,702** | 2,752 | **A2** ⭐ |
-| 8 | 44,933 | 44,221 | 18,788 | **A1** |
-
-**🎖️ Peak Performance:** A2 at 4 threads = **52.7 Gbps**
-
-### Key Findings
-
-✅ **A2 wins at large messages** (16KB) with optimal threading (4 threads)
-✅ **A1 better for small messages** (<1KB) due to lower overhead
-❌ **A3 fails on localhost** (100% copy fallback, no real NIC)
-⚡ **Threading sweet spot:** 4 threads (matches hardware cores)
-
----
-
-## 🔬 Technical Highlights
-
-### Copy Elimination
-
-**Part A1 (Two-Copy):**
-```
-8 scattered fields → memcpy → send_buffer (Copy 1)
-                  → send() → kernel (Copy 2)
-```
-
-**Part A2 (One-Copy):**
-```
-8 scattered fields → iovec pointers (no copy)
-                  → sendmsg() → kernel gather (Copy 1)
-```
-
-**Part A3 (Zero-Copy):**
-```
-8 scattered fields → page pinning
-                  → DMA descriptors → fallback to copy! (localhost)
-```
-
-### Cache Behavior (16KB, 1 thread)
-
-| Metric | A1 | A2 | Winner |
-|--------|----|----|--------|
-| LLC Misses | 199 | **110** | A2 (-44.7%) ✅ |
-| L1 Misses | 89 | 466 | A1 (but A2 still faster!) |
-| Throughput | 36,725 | **44,582** | A2 (+21%) ✅ |
-
-**Insight:** A2 reduces expensive LLC misses despite more L1 misses.
-
----
-
 ## 🐛 Troubleshooting
 
 ### Port In Use
@@ -263,30 +200,6 @@ pip3 install matplotlib --break-system-packages
 
 ---
 
-## 📚 Documentation
-
-### Complete Documentation Files
-
-1. **[MT25067_Complete_Report.md](MT25067_Complete_Report.md)**
-   - Full assignment report
-   - Implementation details
-   - Experimental methodology
-   - Results and analysis
-   - AI usage declaration
-
-2. **[MT25067_PartE_Analysis.md](MT25067_PartE_Analysis.md)**
-   - All 6 analysis questions answered in detail
-   - Experimental evidence
-   - Root cause analysis
-   - Practical implications
-
-3. **[README.md](README.md)** (this file)
-   - Quick reference
-   - Usage instructions
-   - Performance summary
-
----
-
 ## 💡 Key Learnings
 
 1. **Copy elimination matters, but context matters more**
@@ -311,32 +224,13 @@ pip3 install matplotlib --break-system-packages
 
 ---
 
-## 🎓 Assignment Grading
-
-- [x] Part A1: Two-copy (3 marks)
-- [x] Part A2: One-copy (2 marks)
-- [x] Part A3: Zero-copy (2 marks)
-- [x] Diagrams (1 mark)
-- [x] Explanation (1 mark)
-- [x] Part B: Profiling (5 marks)
-- [x] Part C: Automation (4 marks)
-- [x] Part D: Plotting (4 marks)
-- [x] Part E: Analysis (6 marks)
-- [x] Report (3 marks)
-
-**Total: 31/31 marks** ✅
-
----
-
 ## 📞 Contact
 
 **Student:** MT25067  
 **Course:** CSE638 - Graduate Distributed Systems  
 **Institution:** IIIT Delhi  
-**Semester:** Spring 2026  
 **Repository:** https://github.com/dewansh3255/GRS_PA02
 
 ---
 
-**Last Updated:** February 3, 2026  
-**Status:** ✅ Complete and ready for submission
+**Last Updated:** February 6, 2026  
