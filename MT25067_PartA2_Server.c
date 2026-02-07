@@ -246,7 +246,10 @@ int main(int argc, char *argv[]) {
     // Bind
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = INADDR_ANY;
+    if (inet_pton(AF_INET, "10.0.0.1", &server_addr.sin_addr) <= 0) {
+        perror("inet_pton");
+        exit(1);
+    }
     server_addr.sin_port = htons(PORT);
     
     if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {

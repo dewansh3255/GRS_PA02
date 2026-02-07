@@ -12,7 +12,7 @@
 #include <sys/time.h>
 
 #define PORT 8082  // Match Part A3 server port
-#define SERVER_IP "127.0.0.1"
+#define SERVER_IP "10.0.0.1"
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {

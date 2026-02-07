@@ -49,18 +49,25 @@ log_debug() {
     echo -e "${BLUE}[DEBUG]${NC} $1"
 }
 
-# Function to check if a port is in use
+# Function to check if a port is in use IN THE SERVER NAMESPACE
 check_port() {
     local port=$1
-    # Try using ss (modern replacement for netstat)
-    if ss -tuln 2>/dev/null | grep -q ":${port} "; then
-        return 0
-    fi
-    # Fallback to lsof if ss fails
-    if lsof -i :$port >/dev/null 2>&1; then
+    # Check in server_ns instead of host
+    if sudo ip netns exec server_ns ss -tuln 2>/dev/null | grep -q ":${port} "; then
         return 0
     fi
     return 1
+}
+
+# Function to kill process on port IN SERVER NAMESPACE
+kill_on_port() {
+    local port=$1
+    local pid=$(sudo ip netns exec server_ns lsof -ti:$port 2>/dev/null || true)
+    if [ ! -z "$pid" ]; then
+        log_debug "Killing process $pid on port $port in server_ns"
+        sudo ip netns exec server_ns kill -9 $pid 2>/dev/null || true
+        sleep 1
+    fi
 }
 
 # Function to wait for port to be ready
@@ -77,17 +84,6 @@ wait_for_port() {
         count=$((count + 1))
     done
     return 1
-}
-
-# Function to kill process on port
-kill_on_port() {
-    local port=$1
-    local pid=$(lsof -ti:$port 2>/dev/null || true)
-    if [ ! -z "$pid" ]; then
-        log_debug "Killing process $pid on port $port"
-        kill -9 $pid 2>/dev/null || true
-        sleep 1
-    fi
 }
 
 # FIXED: Function to validate perf output
@@ -201,15 +197,15 @@ run_experiment() {
     local server_output="${TEMP_DIR}/server_${exp_name}.txt"
     local client_output="${TEMP_DIR}/client_${exp_name}.txt"
     
-    # Clean up any existing processes on this port
+    # Clean up any existing processes on this port IN SERVER_NS
     kill_on_port $port
     
-    # FIXED: Additional wait after cleanup
     sleep 1
     
-    # Start server with perf
-    log_info "Starting server for $exp_name on port $port"
-    sudo perf stat -e cycles,instructions,cache-misses,L1-dcache-load-misses,context-switches \
+    # Start server with perf IN SERVER NAMESPACE
+    log_info "Starting server for $exp_name on port $port in server_ns"
+    sudo ip netns exec server_ns perf stat \
+        -e cycles,instructions,cache-misses,L1-dcache-load-misses,context-switches \
         -o "$perf_output" \
         ./MT25067_Part${impl}_Server $msg_size $NUM_MESSAGES $num_threads \
         > "$server_output" 2>&1 &
@@ -224,15 +220,14 @@ run_experiment() {
         return 1
     fi
     
-    log_info "Server ready, starting $num_threads client(s)"
+    log_info "Server ready, starting $num_threads client(s) in client_ns"
     
-    # FIXED: Small delay before starting clients
     sleep 0.5
     
-    # Start clients
+    # Start clients IN CLIENT NAMESPACE
     local client_pids=()
     for ((i=1; i<=$num_threads; i++)); do
-        ./MT25067_Part${impl}_Client $msg_size $NUM_MESSAGES \
+        sudo ip netns exec client_ns ./MT25067_Part${impl}_Client $msg_size $NUM_MESSAGES \
             > "${TEMP_DIR}/client_${exp_name}_${i}.txt" 2>&1 &
         client_pids+=($!)
     done
@@ -246,13 +241,11 @@ run_experiment() {
     
     log_info "Clients completed, waiting for server to finish..."
     
-    # FIXED: Longer wait for server to complete and flush perf data
-    sleep 5  # Increased from 2 to 5 seconds
+    sleep 5
     
-    # Wait for server process to finish naturally (if it hasn't already)
+    # Wait for server process to finish naturally
     wait $server_pid 2>/dev/null || true
     
-    # FIXED: Additional wait for perf to write all data
     sleep 1
     
     # Kill server if somehow still running
@@ -264,13 +257,13 @@ run_experiment() {
     # Additional cleanup
     kill_on_port $port
     
-    # FIXED: Validate perf output before parsing
+    # Validate perf output
     if ! validate_perf_output "$perf_output" "$exp_name"; then
         log_error "Perf data validation failed for $exp_name - skipping this experiment"
         return 1
     fi
     
-    # Parse results from first client (they should all be similar)
+    # Parse results from first client
     if [ ! -f "${TEMP_DIR}/client_${exp_name}_1.txt" ]; then
         log_error "Client output file not found for $exp_name"
         return 1
@@ -284,7 +277,7 @@ run_experiment() {
     # Parse perf output and complete CSV line
     local complete_line=$(parse_perf_output "$perf_output" "$csv_line")
     
-    # Append to CSV in main directory
+    # Append to CSV
     echo "$complete_line" >> "$CSV_FILE"
     
     log_info "✓ Experiment $exp_name completed successfully"
@@ -300,6 +293,15 @@ main() {
     log_info "=========================================="
     echo ""
     
+    # CHECK IF NAMESPACES EXIST
+    if ! sudo ip netns list | grep -q "server_ns"; then
+        log_error "Network namespaces not found!"
+        log_error "Please run: sudo ./MT25067_Setup_Netns.sh"
+        exit 1
+    fi
+    log_info "✓ Network namespaces detected"
+    echo ""
+
     # Create temp directory for intermediate files
     mkdir -p "$TEMP_DIR"
     

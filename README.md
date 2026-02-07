@@ -63,17 +63,63 @@ This assignment compares three network I/O approaches:
 **Ubuntu/Linux:**
 ```bash
 sudo apt update
-sudo apt install build-essential perf python3-matplotlib lsof
-```
-
-**macOS:**
-```bash
-brew install gcc python3
-pip3 install matplotlib
+sudo apt install build-essential linux-tools-common linux-tools-generic \
+                 python3 python3-matplotlib lsof iproute2
 ```
 
 ---
+## 📡 Network Namespace Setup (Required)
 
+### Automated Setup (Recommended)
+
+```bash
+# Run the provided setup script
+sudo bash ./MT25067_Setup_Netns.sh
+```
+
+This creates:
+- **Server namespace**: `server_ns` (IP: 10.0.0.1/24)
+- **Client namespace**: `client_ns` (IP: 10.0.0.2/24)
+- **veth pair**: Virtual ethernet connecting the namespaces
+
+### Manual Setup (Alternative)
+
+```bash
+# Create namespaces
+sudo ip netns add server_ns
+sudo ip netns add client_ns
+
+# Create veth pair
+sudo ip link add veth_server type veth peer name veth_client
+
+# Move interfaces to namespaces
+sudo ip link set veth_server netns server_ns
+sudo ip link set veth_client netns client_ns
+
+# Configure IP addresses
+sudo ip netns exec server_ns ip addr add 10.0.0.1/24 dev veth_server
+sudo ip netns exec client_ns ip addr add 10.0.0.2/24 dev veth_client
+
+# Bring up interfaces
+sudo ip netns exec server_ns ip link set veth_server up
+sudo ip netns exec server_ns ip link set lo up
+sudo ip netns exec client_ns ip link set veth_client up
+sudo ip netns exec client_ns ip link set lo up
+
+# Verify connectivity
+sudo ip netns exec client_ns ping -c 3 10.0.0.1
+```
+
+### Cleanup Namespaces
+
+```bash
+sudo bash ./MT25067_Cleanup_Netns.sh
+# OR manually:
+sudo ip netns del server_ns
+sudo ip netns del client_ns
+```
+
+---
 ## 🏗️ Building
 
 ```bash
@@ -91,45 +137,101 @@ make clean
 
 ---
 
-## 💻 Usage
+## 💻 Manual Usage
 
-### Part A1: Two-Copy
+### Part A1: Two-Copy Implementation
 
 **Terminal 1 (Server):**
 ```bash
-./MT25067_PartA1_Server <msg_size> <num_msgs> <threads>
-# Example:
-./MT25067_PartA1_Server 16384 1000 4
+./MT25067_PartA1_Server 16384 5000 4
+# Args: <message_size> <num_messages> <num_threads>
 ```
 
-**Terminal 2 (Client):**
+**Terminal 2 (Client, repeat 4 times for 4 threads):**
 ```bash
-./MT25067_PartA1_Client <msg_size> <num_msgs>
-# Example:
-./MT25067_PartA1_Client 16384 1000
+./MT25067_PartA1_Client 16384 5000
+# Args: <message_size> <num_messages>
 ```
 
-### Part A2: One-Copy
+### Part A2: One-Copy Implementation
 
+**Server:**
 ```bash
-# Server
-./MT25067_PartA2_Server 16384 1000 4
-
-# Client (separate terminal)
-./MT25067_PartA2_Client 16384 1000
+./MT25067_PartA2_Server 16384 5000 4
 ```
 
-### Part A3: Zero-Copy
-
+**Client:**
 ```bash
-# Server (use 1 thread only!)
-./MT25067_PartA3_Server 16384 1000 1
-
-# Client
-./MT25067_PartA3_Client 16384 1000
+./MT25067_PartA2_Client 16384 5000
 ```
 
-**⚠️ Warning:** A3 has catastrophic performance with multiple threads on localhost.
+### Part A3: Zero-Copy Implementation
+
+**⚠️ Important:** Use **1 thread only** on localhost to avoid catastrophic performance collapse.
+
+**Server:**
+```bash
+./MT25067_PartA3_Server 16384 5000 1
+```
+
+**Client:**
+```bash
+./MT25067_PartA3_Client 16384 5000
+```
+
+---
+
+## 📊 Performance Results
+
+### Peak Performance (Localhost Loopback)
+
+| Configuration | A1 (Gbps) | A2 (Gbps) | A3 (Gbps) | Winner |
+|---------------|-----------|-----------|-----------|--------|
+| 16KB, 1T | 55.01 | 50.66 | 31.81 | **A1** |
+| 16KB, 2T | **57.79** | 45.50 | 26.89 | **A1** ⭐ |
+| 16KB, 4T | 53.76 | **56.69** | 26.50 | **A2** |
+| 16KB, 8T | 14.83 | **22.44** | 20.88 | **A2** |
+
+**🏆 Absolute Peak:** A1 at 2 threads, 16KB = **57.79 Gbps**  
+**🏆 Best Scaling:** A2 at 4 threads, 16KB = **56.69 Gbps**
+
+### Key Findings
+
+#### ✅ What Worked
+
+1. **A1 (Two-Copy) Dominates at Low Thread Counts**
+   - Best single-threaded performance across all message sizes
+   - Peak: 57.79 Gbps at 2 threads
+   - Intel's optimized `memcpy()` (ERMSB) is extremely fast
+
+2. **A2 (One-Copy) Scales Better**
+   - Wins at 4+ threads for large messages
+   - Better cache behavior under contention
+   - Scatter-gather reduces false sharing
+
+3. **Threading Sweet Spot: 4 Threads**
+   - Matches Intel i7-12700's 4 P-cores
+   - Both A1 and A2 perform well
+   - Beyond 4 threads: diminishing returns
+
+#### ❌ What Didn't Work
+
+1. **A3 (Zero-Copy) Failed Completely on Localhost**
+   - **100% copy fallback** (no physical NIC)
+   - Best case: 42% slower than A1 (16KB, 1T)
+   - Worst case: **5,534% slower** than A1 (4KB, 4T)
+   - Context switch storm: 4,685 switches vs A1's 3
+
+2. **A1 Catastrophic Collapse at 8 Threads**
+   - Throughput drops **73%** from 1T→8T (55.01 → 14.83 Gbps)
+   - Context switches: 3 → 122 (40x increase)
+   - LLC misses: 227K → 3.57M (15.7x increase)
+   - Contiguous buffer becomes bottleneck
+
+3. **Small Messages Have High Overhead**
+   - Setup costs dominate for <1KB messages
+   - A1 wins decisively at small sizes
+   - iovec overhead in A2 not worth it
 
 ---
 
@@ -167,60 +269,108 @@ python3 MT25067_PartD_Plots.py
 
 ## 🐛 Troubleshooting
 
-### Port In Use
+### Port Already in Use
 
-The automation script uses an improved dual-method port checking:
-- **Primary:** `ss` command (modern, faster)
-- **Fallback:** `lsof` (for compatibility)
+**Problem:**
+```
+bind: Address already in use
+```
+
+**Solution:**
+The automation script handles this automatically, but for manual cleanup:
 
 ```bash
-# Manual cleanup if needed:
+# Kill processes on specific ports
 sudo lsof -ti:8080 | xargs kill -9
 sudo lsof -ti:8081 | xargs kill -9
 sudo lsof -ti:8082 | xargs kill -9
+
+# Or kill all your servers
+killall MT25067_PartA1_Server MT25067_PartA2_Server MT25067_PartA3_Server
 ```
 
-**Note:** The script's `check_port()` function automatically handles port conflicts with robust error handling.
+**Prevention:** The automation script uses dual-method port checking:
+```bash
+# Primary: ss (modern)
+ss -tuln | grep ":8080 "
+
+# Fallback: lsof (compatibility)
+lsof -i :8080
+```
 
 ### perf Permission Denied
 
-```bash
-# Run script with sudo
-sudo bash MT25067_PartC_AutomationScript.sh
-
-# Or adjust paranoid level
-echo 0 | sudo tee /proc/sys/kernel/perf_event_paranoid
+**Problem:**
+```
+perf_event_open(...) failed: Permission denied
 ```
 
-### matplotlib Missing
-
+**Solution:**
 ```bash
+# Temporary (current session)
+echo 0 | sudo tee /proc/sys/kernel/perf_event_paranoid
+
+# Or run automation script with sudo
+sudo bash MT25067_PartC_AutomationScript.sh
+```
+
+### matplotlib Import Error
+
+**Problem:**
+```
+ModuleNotFoundError: No module named 'matplotlib'
+```
+
+**Solution:**
+```bash
+# Ubuntu/Debian
+sudo apt install python3-matplotlib
+
+# Or via pip (if apt not available)
 pip3 install matplotlib --break-system-packages
+```
+
+### Compilation Warnings
+
+**Problem:**
+```
+warning: unused variable 'xyz'
+```
+
+**Solution:** These are informational only. Code compiles with `-Wall -Wextra` for strict checking. To suppress:
+```bash
+make clean
+make CFLAGS="-O2 -pthread"  # Without -Wall -Wextra
 ```
 
 ---
 
 ## 💡 Key Learnings
 
-1. **Copy elimination matters, but context matters more**
-   - A2 beat A1 by 91% in optimal configuration
-   - But A1 wins for small messages
-
-2. **Zero-copy isn't always zero-copy**
+1. **Zero-Copy Isn't Always Zero-Copy**
    - 100% fallback on localhost
    - Requires real NIC with DMA
+   - Overhead can exceed benefits
 
-3. **Platform dependency is real**
+2. **Threading Has Non-Linear Effects**
+   - Sweet spot at 4 threads (hardware cores)
+   - Beyond 4: diminishing returns
+   - A1 collapses at 8 threads (-73% throughput)
+
+3. **Cache Hierarchy Matters More Than Cache Misses**
+   - LLC misses more expensive than L1 misses
+   - A2 reduces LLC misses despite more L1 misses
+   - Total system behavior > single metric
+
+4. **Simple ≠ Scalable**
+   - A1's "simple" design fails under contention
+   - A2's "complex" scatter-gather scales better
+   - Contiguous buffers create serialization points
+
+5. **Platform Dependency is Real**
    - macOS (ARM): A1 wins everywhere
-   - Linux (x86): A2 wins at large messages
-
-4. **Threading is non-linear**
-   - A2 peaks at 4 threads
-   - A3 catastrophically fails with threading
-
-5. **Always measure, never assume**
-   - "Advanced" techniques can be slower
-   - Profile on target hardware
+   - Linux (x86): A2 wins at large messages + threading
+   - Always profile on target hardware
 
 ---
 
@@ -233,4 +383,4 @@ pip3 install matplotlib --break-system-packages
 
 ---
 
-**Last Updated:** February 6, 2026  
+**Last Updated:** February 7, 2026  
