@@ -54,7 +54,7 @@ This assignment compares three network I/O approaches:
 | **Part A2** | 1 | sendmsg() scatter-gather | 8081 |
 | **Part A3** | 0* | MSG_ZEROCOPY | 8082 |
 
-*Note: A3 achieves 100% copy fallback on localhost
+*Note: A3 achieves 100% copy fallback on veth (virtual ethernet)
 
 ---
 
@@ -139,17 +139,19 @@ make clean
 
 ## 💻 Manual Usage
 
+> **Note:** All commands must be run within network namespaces. See namespace setup above.
+
 ### Part A1: Two-Copy Implementation
 
-**Terminal 1 (Server):**
+**Terminal 1 (Server in server_ns):**
 ```bash
-./MT25067_PartA1_Server 16384 5000 4
+sudo ip netns exec server_ns ./MT25067_PartA1_Server 16384 5000 4
 # Args: <message_size> <num_messages> <num_threads>
 ```
 
-**Terminal 2 (Client, repeat 4 times for 4 threads):**
+**Terminal 2 (Client in client_ns, repeat 4 times for 4 threads):**
 ```bash
-./MT25067_PartA1_Client 16384 5000
+sudo ip netns exec client_ns ./MT25067_PartA1_Client 16384 5000
 # Args: <message_size> <num_messages>
 ```
 
@@ -157,26 +159,26 @@ make clean
 
 **Server:**
 ```bash
-./MT25067_PartA2_Server 16384 5000 4
+sudo ip netns exec server_ns ./MT25067_PartA2_Server 16384 5000 4
 ```
 
 **Client:**
 ```bash
-./MT25067_PartA2_Client 16384 5000
+sudo ip netns exec client_ns ./MT25067_PartA2_Client 16384 5000
 ```
 
 ### Part A3: Zero-Copy Implementation
 
-**⚠️ Important:** Use **1 thread only** on localhost to avoid catastrophic performance collapse.
+**⚠️ Important:** A3 has high context switch overhead on veth due to MSG_ERRQUEUE polling.
 
 **Server:**
 ```bash
-./MT25067_PartA3_Server 16384 5000 1
+sudo ip netns exec server_ns ./MT25067_PartA3_Server 16384 5000 1
 ```
 
 **Client:**
 ```bash
-./MT25067_PartA3_Client 16384 5000
+sudo ip netns exec client_ns ./MT25067_PartA3_Client 16384 5000
 ```
 
 ---
@@ -216,11 +218,11 @@ make clean
 
 #### ❌ What Didn't Work
 
-1. **A3 (Zero-Copy) Failed Completely on Localhost**
-   - **100% copy fallback** (no physical NIC)
-   - Best case: 42% slower than A1 (16KB, 1T)
-   - Worst case: **5,534% slower** than A1 (4KB, 4T)
-   - Context switch storm: 4,685 switches vs A1's 3
+1. **A3 (Zero-Copy) Failed Completely on veth**
+   - **100% copy fallback** (no physical NIC with DMA)
+   - Best case: 28% slower than A1 (16KB, 1T: 21.88 vs 30.23 Gbps)
+   - Worst case: 55% slower than A1 (256B, 1T)
+   - Context switch storm: 4,682 switches vs A1's 5
 
 2. **A3 Context Switch Explosion**
    - Context switches: 4,682 (1T) → 37,454 (8T)
@@ -242,7 +244,7 @@ Run all 48 experiments automatically:
 sudo bash MT25067_PartC_AutomationScript.sh
 ```
 
-**Output:** `experiment_results/MT25067_ExperimentData.csv`
+**Output:** `MT25067_ExperimentData.csv`
 
 **Parameters:**
 - Message sizes: 256B, 1KB, 4KB, 16KB
@@ -257,7 +259,7 @@ sudo bash MT25067_PartC_AutomationScript.sh
 python3 MT25067_PartD_Plots.py
 ```
 
-**Generates 5 plots** (PDF + PNG):
+**Generates 5 PNG plots:**
 1. Throughput vs Message Size
 2. Latency vs Thread Count
 3. Cache Misses vs Message Size
@@ -361,10 +363,10 @@ make CFLAGS="-O2 -pthread"  # Without -Wall -Wextra
    - A2 reduces LLC misses despite more L1 misses
    - Total system behavior > single metric
 
-4. **Simple ≠ Scalable**
-   - A1's "simple" design fails under contention
-   - A2's "complex" scatter-gather scales better
-   - Contiguous buffers create serialization points
+4. **Simple Can Be Effective**
+   - A1's straightforward design performs consistently well
+   - A2's scatter-gather provides marginal gains at certain sizes
+   - Complexity doesn't always equal performance
 
 5. **Platform Dependency is Real**
    - macOS (ARM): A1 wins everywhere
