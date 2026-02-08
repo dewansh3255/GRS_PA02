@@ -183,30 +183,30 @@ make clean
 
 ## 📊 Performance Results
 
-### Peak Performance (Localhost Loopback)
+### Peak Performance (Network Namespaces via veth)
 
 | Configuration | A1 (Gbps) | A2 (Gbps) | A3 (Gbps) | Winner |
 |---------------|-----------|-----------|-----------|--------|
-| 16KB, 1T | 55.01 | 50.66 | 31.81 | **A1** |
-| 16KB, 2T | **57.79** | 45.50 | 26.89 | **A1** ⭐ |
-| 16KB, 4T | 53.76 | **56.69** | 26.50 | **A2** |
-| 16KB, 8T | 14.83 | **22.44** | 20.88 | **A2** |
+| 16KB, 1T | 30.23 | 31.85 | 21.88 | **A2** |
+| 16KB, 2T | **33.44** | 27.83 | 19.37 | **A1** ⭐ |
+| 16KB, 4T | 33.34 | 23.26 | 22.12 | **A1** |
+| 16KB, 8T | 31.94 | 25.35 | 16.46 | **A1** |
 
-**🏆 Absolute Peak:** A1 at 2 threads, 16KB = **57.79 Gbps**  
-**🏆 Best Scaling:** A2 at 4 threads, 16KB = **56.69 Gbps**
+**🏆 Absolute Peak:** A1 at 2 threads, 16KB = **33.44 Gbps**  
+**🏆 Best Scaling:** A1 maintains ~31-33 Gbps across all thread counts
 
 ### Key Findings
 
 #### ✅ What Worked
 
-1. **A1 (Two-Copy) Dominates at Low Thread Counts**
-   - Best single-threaded performance across all message sizes
-   - Peak: 57.79 Gbps at 2 threads
+1. **A1 (Two-Copy) Dominates Overall**
+   - Best throughput across most configurations
+   - Peak: 33.44 Gbps at 2 threads, 16KB
    - Intel's optimized `memcpy()` (ERMSB) is extremely fast
 
-2. **A2 (One-Copy) Scales Better**
-   - Wins at 4+ threads for large messages
-   - Better cache behavior under contention
+2. **A2 (One-Copy) Competitive at 1 Thread**
+   - Slightly wins at 16KB with 1 thread (31.85 vs 30.23 Gbps)
+   - Good cache behavior with reduced copies
    - Scatter-gather reduces false sharing
 
 3. **Threading Sweet Spot: 4 Threads**
@@ -222,11 +222,10 @@ make clean
    - Worst case: **5,534% slower** than A1 (4KB, 4T)
    - Context switch storm: 4,685 switches vs A1's 3
 
-2. **A1 Catastrophic Collapse at 8 Threads**
-   - Throughput drops **73%** from 1T→8T (55.01 → 14.83 Gbps)
-   - Context switches: 3 → 122 (40x increase)
-   - LLC misses: 227K → 3.57M (15.7x increase)
-   - Contiguous buffer becomes bottleneck
+2. **A3 Context Switch Explosion**
+   - Context switches: 4,682 (1T) → 37,454 (8T)
+   - 485× more context switches than A1 at 8 threads
+   - MSG_ERRQUEUE polling causes massive overhead
 
 3. **Small Messages Have High Overhead**
    - Setup costs dominate for <1KB messages
@@ -348,14 +347,14 @@ make CFLAGS="-O2 -pthread"  # Without -Wall -Wextra
 ## 💡 Key Learnings
 
 1. **Zero-Copy Isn't Always Zero-Copy**
-   - 100% fallback on localhost
+   - 100% fallback on veth (virtual interface)
    - Requires real NIC with DMA
    - Overhead can exceed benefits
 
 2. **Threading Has Non-Linear Effects**
-   - Sweet spot at 4 threads (hardware cores)
-   - Beyond 4: diminishing returns
-   - A1 collapses at 8 threads (-73% throughput)
+   - A1 maintains good performance up to 8 threads
+   - A3 suffers from context switch explosion at higher thread counts
+   - Sweet spot varies by implementation
 
 3. **Cache Hierarchy Matters More Than Cache Misses**
    - LLC misses more expensive than L1 misses
